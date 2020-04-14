@@ -246,7 +246,8 @@ def _generate_and_write_rsa_keypair(filepath=None, bits=DEFAULT_RSA_KEY_BITS,
   # Write PEM-encoded private key to <filepath>
   file_object = tempfile.TemporaryFile()
   file_object.write(private.encode('utf-8'))
-  securesystemslib.util.persist_temp_file(file_object, filepath)
+  securesystemslib.util.persist_temp_file(file_object, filepath,
+      permissions=PRIVATE_KEY_MODE)
 
   return filepath
 
@@ -517,7 +518,8 @@ def _generate_and_write_ed25519_keypair(filepath=None, password=None,
   # Write private key to <filepath>
   file_object = tempfile.TemporaryFile()
   file_object.write(ed25519_key.encode('utf-8'))
-  securesystemslib.util.persist_temp_file(file_object, filepath)
+  securesystemslib.util.persist_temp_file(file_object, filepath,
+      permissions=PRIVATE_KEY_MODE)
 
   return filepath
 
@@ -762,7 +764,8 @@ def _generate_and_write_ecdsa_keypair(filepath=None, password=None,
   # Write private key to <filepath>
   file_object = tempfile.TemporaryFile()
   file_object.write(ecdsa_key.encode('utf-8'))
-  securesystemslib.util.persist_temp_file(file_object, filepath)
+  securesystemslib.util.persist_temp_file(file_object, filepath,
+      permissions=PRIVATE_KEY_MODE)
 
   return filepath
 
