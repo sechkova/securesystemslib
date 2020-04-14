@@ -72,7 +72,7 @@ class StorageBackendInterface():
 
 
   @abc.abstractmethod
-  def put(self, fileobj, filepath):
+  def put(self, fileobj, filepath, permissions=None):
     """
     <Purpose>
       Store a file-like object in the storage backend.
@@ -85,6 +85,10 @@ class StorageBackendInterface():
 
       filepath:
         The full path to the location where 'fileobj' will be stored.
+
+      permissions:
+        The permissions of the file-like object. If None, the
+        implementation-specific default permissions apply.
 
     <Exceptions>
       securesystemslib.exceptions.StorageError, if the file can not be stored.
@@ -233,11 +237,27 @@ class FilesystemBackend(StorageBackendInterface):
   get = GetFile
 
 
-  def put(self, fileobj, filepath):
+  def put(self, fileobj, filepath, permissions=None):
     # If we are passed an open file, seek to the beginning such that we are
     # copying the entire contents
     if not fileobj.closed:
       fileobj.seek(0)
+
+    # When calculating file permissions, the current OS umask value is first
+    # masked out. If custom permissions are set, we calculate a new umask
+    # followed by a call to open() with default permissions (0o777).
+    # This trick is done since open() does not support mode(permissions) as
+    # input parameter, alternatively os.open() can be used.
+    if permissions:
+      umask = 0o777^permissions
+      old_umask = os.umask(umask)
+
+      # If a file with the same name already exists, the new permissions
+      # may not be applied.
+      try:
+        os.remove(filepath)
+      except OSError:
+        pass
 
     try:
       with open(filepath, 'wb') as destination_file:
@@ -249,6 +269,10 @@ class FilesystemBackend(StorageBackendInterface):
     except (OSError, IOError):
       raise securesystemslib.exceptions.StorageError(
           "Can't write file %s" % filepath)
+
+    # Restore the umask value
+    if permissions:
+      os.umask(old_umask)
 
 
   def remove(self, filepath):
