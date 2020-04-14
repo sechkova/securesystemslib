@@ -255,8 +255,17 @@ class TestUtil(unittest_toolbox.Modified_TestCase):
     dest_path = os.path.join(dest_temp_dir, self.random_string())
     tmpfile = tempfile.TemporaryFile()
     tmpfile.write(self.random_string().encode('utf-8'))
-    securesystemslib.util.persist_temp_file(tmpfile, dest_path)
+    # Write a file with custom permissions
+    securesystemslib.util.persist_temp_file(tmpfile, dest_path,
+        permissions=0o600)
     self.assertTrue(dest_path)
+    # Test if file permissions are as expected
+    # permissions = default mode (0o777) - umask
+    expected_perm = '600'
+    if os.name != 'posix':
+      # Windows only supports setting the read-only attribute.
+      expected_perm = '666'
+    self.assertEqual(oct(os.stat(dest_path).st_mode)[-3:], expected_perm)
     self.assertTrue(tmpfile.closed)
 
     # Test persisting a file without automatically closing the tmpfile
