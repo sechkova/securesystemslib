@@ -86,9 +86,12 @@ class StorageBackendInterface():
       filepath:
         The full path to the location where 'fileobj' will be stored.
 
-      permissions:
-        The permissions of the file-like object. If None, the
-        implementation-specific default permissions apply.
+      mode:
+        Bit mask with custom file permissions for the file-like object. When
+        computing mode, the current OS umask value is first masked out. If None,
+        the default OS permissions apply.
+        On Windows systems only the file’s read-only flag can be set. All other
+        bits are ignored.
 
     <Exceptions>
       securesystemslib.exceptions.StorageError, if the file can not be stored.
@@ -237,7 +240,7 @@ class FilesystemBackend(StorageBackendInterface):
   get = GetFile
 
 
-  def put(self, fileobj, filepath, permissions=None):
+  def put(self, fileobj, filepath, mode=None):
     # If we are passed an open file, seek to the beginning such that we are
     # copying the entire contents
     if not fileobj.closed:
@@ -248,19 +251,23 @@ class FilesystemBackend(StorageBackendInterface):
     # followed by a call to open() with default permissions (0o777).
     # This trick is done since open() does not support mode(permissions) as
     # input parameter, alternatively os.open() can be used.
-    if permissions:
-      umask = 0o777^permissions
-      old_umask = os.umask(umask)
 
-      # If a file with the same name already exists, the new permissions
-      # may not be applied.
-      try:
-        os.remove(filepath)
-      except OSError:
-        pass
+
+    # If a file with the same name already exists, the new permissions
+    # may not be applied.
+    try:
+      os.remove(filepath)
+    except OSError:
+      pass
+
 
     try:
-      with open(filepath, 'wb') as destination_file:
+      if mode is None:
+        fd = os.open(filepath, os.O_WRONLY|os.O_CREAT)
+      else:
+        fd = os.open(filepath, os.O_WRONLY|os.O_CREAT, mode)
+
+      with os.fdopen(fd, "wb") as destination_file:
         shutil.copyfileobj(fileobj, destination_file)
         # Force the destination file to be written to disk from Python's internal
         # and the operating system's buffers.  os.fsync() should follow flush().
@@ -270,9 +277,6 @@ class FilesystemBackend(StorageBackendInterface):
       raise securesystemslib.exceptions.StorageError(
           "Can't write file %s" % filepath)
 
-    # Restore the umask value
-    if permissions:
-      os.umask(old_umask)
 
 
   def remove(self, filepath):
