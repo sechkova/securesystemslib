@@ -90,7 +90,7 @@ class StorageBackendInterface():
         Bit mask with custom file permissions for the file-like object. When
         computing mode, the current OS umask value is first masked out. If None,
         the default OS permissions apply.
-        On Windows systems only the file’s read-only flag can be set. All other
+        On Windows systems only the file's read-only flag can be set. All other
         bits are ignored.
 
     <Exceptions>
