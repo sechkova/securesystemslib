@@ -170,7 +170,7 @@ def get_file_length(filepath, storage_backend=None):
 
 
 def persist_temp_file(temp_file, persist_path, storage_backend=None,
-    should_close=True, permissions=None):
+    should_close=True, mode=None):
   """
   <Purpose>
     Copies 'temp_file' (a file like object) to a newly created non-temp file at
@@ -193,9 +193,12 @@ def persist_temp_file(temp_file, persist_path, storage_backend=None,
       A boolean indicating whether the file should be closed after it has been
       persisted. Default is True, the file is closed.
 
-    permissions:
-      Custom file permissions for the newly created file. If None, the default
-      OS permissions apply.
+    mode:
+      Bit mask with custom file permissions for the newly created file. When
+      computing mode, the current OS umask value is first masked out. If None,
+      the default OS permissions apply.
+      On Windows systems only the file’s read-only flag can be set. All other
+      bits are ignored.
 
   <Exceptions>
     None.
@@ -207,7 +210,7 @@ def persist_temp_file(temp_file, persist_path, storage_backend=None,
   if storage_backend is None:
     storage_backend = securesystemslib.storage.FilesystemBackend()
 
-  storage_backend.put(temp_file, persist_path, permissions)
+  storage_backend.put(temp_file, persist_path, mode=mode)
 
   if should_close:
     temp_file.close()
