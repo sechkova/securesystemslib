@@ -23,13 +23,16 @@ import logging
 from securesystemslib import exceptions
 from securesystemslib import formats
 from securesystemslib.hash import digest_fileobject
-from securesystemslib.storage import FilesystemBackend
+from securesystemslib.storage import FilesystemBackend, StorageBackendInterface
+
+from typing import Any, Dict, IO, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
 
-def get_file_details(filepath, hash_algorithms=['sha256'],
-    storage_backend=None):
+def get_file_details(filepath: str, hash_algorithms: List[str] =['sha256'],
+    storage_backend: Optional[StorageBackendInterface] = None
+    ) -> Tuple[int, Dict[str, str]]:
   """
   <Purpose>
     To get file's length and hash information.  The hash is computed using the
@@ -73,8 +76,9 @@ def get_file_details(filepath, hash_algorithms=['sha256'],
   return file_length, file_hashes
 
 
-def get_file_hashes(filepath, hash_algorithms=['sha256'],
-    storage_backend=None):
+def get_file_hashes(filepath: str, hash_algorithms: List[str] =['sha256'],
+    storage_backend: Optional[StorageBackendInterface] = None
+    ) -> Dict[str, str]:
   """
   <Purpose>
     Compute hash(es) of the file at filepath using each of the specified
@@ -129,7 +133,8 @@ def get_file_hashes(filepath, hash_algorithms=['sha256'],
 
 
 
-def get_file_length(filepath, storage_backend=None):
+def get_file_length(filepath: str,
+    storage_backend: Optional[StorageBackendInterface]=None) -> int:
   """
   <Purpose>
     To get file's length information.
@@ -160,8 +165,9 @@ def get_file_length(filepath, storage_backend=None):
   return storage_backend.getsize(filepath)
 
 
-def persist_temp_file(temp_file, persist_path, storage_backend=None,
-    should_close=True):
+def persist_temp_file(temp_file: IO, persist_path: str,
+    storage_backend: Optional[StorageBackendInterface]=None,
+    should_close: bool=True):
   """
   <Purpose>
     Copies 'temp_file' (a file like object) to a newly created non-temp file at
@@ -200,7 +206,8 @@ def persist_temp_file(temp_file, persist_path, storage_backend=None,
     temp_file.close()
 
 
-def ensure_parent_dir(filename, storage_backend=None):
+def ensure_parent_dir(filename: str,
+    storage_backend: Optional[StorageBackendInterface]=None):
   """
   <Purpose>
     To ensure existence of the parent directory of 'filename'.  If the parent
@@ -246,7 +253,8 @@ def ensure_parent_dir(filename, storage_backend=None):
     storage_backend.create_folder(directory)
 
 
-def file_in_confined_directories(filepath, confined_directories):
+def file_in_confined_directories(filepath: str,
+    confined_directories: Union[List[str], Tuple[str]]) -> bool:
   """
   <Purpose>
     Check if the directory containing 'filepath' is in the list/tuple of
@@ -340,8 +348,9 @@ def import_json():
 
 json = import_json()
 
+json_str = Union[str, bytes, bytearray]
 
-def load_json_string(data):
+def load_json_string(data: json_str) -> Any:
   """
   <Purpose>
     Deserialize 'data' (JSON string) to a Python object.
@@ -378,7 +387,8 @@ def load_json_string(data):
     return deserialized_object
 
 
-def load_json_file(filepath, storage_backend=None):
+def load_json_file(filepath: str,
+    storage_backend: Optional[StorageBackendInterface]=None) -> Any:
   """
   <Purpose>
     Deserialize a JSON object from a file containing the object.
@@ -430,7 +440,7 @@ def load_json_file(filepath, storage_backend=None):
       return deserialized_object
 
 
-def digests_are_equal(digest1, digest2):
+def digests_are_equal(digest1: str, digest2: str) -> bool:
   """
   <Purpose>
     While protecting against timing attacks, compare the hexadecimal arguments
