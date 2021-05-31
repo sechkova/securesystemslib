@@ -318,9 +318,6 @@ def import_json():
   <Arguments>
     None.
 
-  <Exceptions>
-    ImportError: on failure to import the json module.
-
   <Side Effects>
     None.
 
@@ -330,21 +327,10 @@ def import_json():
 
   global _json_module
 
-  if _json_module is not None:
-    return _json_module
-
-  else:
-    # TODO: Drop Python < 2.6 case handling
-    try:
-      module = __import__('json')
-    # The 'json' module is available in Python > 2.6, and thus this exception
-    # should not occur in all supported Python installations (> 2.6).
-    except ImportError: #pragma: no cover
-      raise ImportError('Could not import the json module')
-
-    else:
-      _json_module = module
-      return module
+  if _json_module is None:
+    _json_module = __import__('json')
+  
+  return _json_module
 
 json = import_json()
 
